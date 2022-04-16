@@ -1,0 +1,10 @@
+{
+  "name": "package-json-compare",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "George Spake <george@georgespake.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.6.3"
+  }
+}
