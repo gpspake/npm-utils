@@ -1,7 +1,16 @@
 {
   "compilerOptions": {
+    "outDir":"dist",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "types": [
       "node"
     ]
   },
+  "files": [
+    "index.ts",
+    "commands/index.ts",
+    "commands/compare-package-json-command.ts",
+    "commands/compare-package-json-files.ts"
+  ]
 }
