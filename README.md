@@ -1,4 +1,4 @@
-#npm utils
+# npm utils
 
 A library of scripts for analysing package.json files and npm output
 

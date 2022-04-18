@@ -1,8 +1,10 @@
 {
   "name": "@spake/npm-utils",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "main": "dist/index.js",
   "author": "George Spake <george@georgespake.com>",
+  "repository": "gpspake/npm-utils",
+  "homepage": "https://github.com/tannerlinsley/react-query#readme",
   "license": "MIT",
   "bin": {
     "npm-utils": "dist/index.js"
@@ -10,6 +12,12 @@
   "scripts": {
     "build": "npx tsc",
     "lint": "eslint . --ext .ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "devDependencies": {
     "@types/node": "^17.0.24",
