@@ -1,6 +1,6 @@
 {
   "name": "@spake/npm-utils",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist/index.js",
   "author": "George Spake <george@georgespake.com>",
   "repository": "gpspake/npm-utils",
@@ -19,6 +19,7 @@
   "publishConfig": {
     "access": "public"
   },
+  "keywords": ["typescript", "node", "yargs", "cli"],
   "devDependencies": {
     "@types/node": "^17.0.24",
     "@typescript-eslint/eslint-plugin": "^5.19.0",
