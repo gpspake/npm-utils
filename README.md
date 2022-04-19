@@ -6,12 +6,12 @@ A library of scripts for analysing package.json files and npm output
 ### install
 npm
 ```
-npm install @spake/npm-utils
+npm install @spake/npm-utils -g
 ```
 
 yarn
 ```
-yarn @spake/npm-utils
+yarn global add @spake/npm-utils
 ```
 
 ## Utils
