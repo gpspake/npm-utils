@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import * as fs from 'fs'
 
 // compares before and after versions of a package.json file to report stats
@@ -10,11 +8,14 @@ import * as fs from 'fs'
 // number of dependencies removed
 // number of dependencies added
 
+// data flow
+// PackageJsonFile -> EnrichedDependency[] -> AggregateDependencyData -> report
+
 // types
 type KeyValue = { [key: string]: string }
 type IFrom = 'before' | 'after'
 type IDependencyType = 'dependency' | 'devDependency'
-type NormalizedDependency = {
+type EnrichedDependency = {
   dependency: {
     packageName: string
     version: string
@@ -22,25 +23,34 @@ type NormalizedDependency = {
   dependencyType: IDependencyType
   from: IFrom
 }
-type RawDependencies = {
+type PackageJsonFile = {
+  name: string
+  version: string
+  repository: string | undefined
   dependencies: KeyValue
   devDependencies: KeyValue
 }
-type NormalizedDependencies = {
-  dependencies: NormalizedDependency[]
-  devDependencies: NormalizedDependency[]
-}
-type NormalizedDependencyData = {
-  before: NormalizedDependencies
-  after: NormalizedDependencies
+type AggregateDependencyData = {
+  before: {
+    packageName: string
+    packageVersion: string
+    dependencies: EnrichedDependency[]
+    devDependencies: EnrichedDependency[]
+  }
+  after: {
+    packageName: string
+    packageVersion: string
+    dependencies: EnrichedDependency[]
+    devDependencies: EnrichedDependency[]
+  }
 }
 
 // transform dependency KeyValue objects from package.json to NormalizedDependency objects
-const normalizeDependencies = (
+const enrichDependencies = (
   dependencies: KeyValue,
   dependencyType: IDependencyType,
   from: IFrom
-): NormalizedDependency[] =>
+): EnrichedDependency[] =>
   Object.entries(dependencies).map(dependency => ({
     dependency: {
       packageName: dependency[0],
@@ -50,50 +60,54 @@ const normalizeDependencies = (
     from,
   }))
 
-type IGetNormalizedDependencyArgs = {
-  packagesBefore: RawDependencies
-  packagesAfter: RawDependencies
+type IGetAggregateDependencyDataArgs = {
+  packageJsonBefore: PackageJsonFile
+  packageJsonAfter: PackageJsonFile
 }
 
-// normalized data
-const getNormalizedDependencyData = (
-  args: IGetNormalizedDependencyArgs
-): NormalizedDependencyData => {
-  const { packagesBefore, packagesAfter } = args
-  const normalizedDependencyData = {
+// aggregate enriched data
+const getAggregateDependencyData = (
+  args: IGetAggregateDependencyDataArgs
+): AggregateDependencyData => {
+  const { packageJsonBefore, packageJsonAfter } = args
+  const aggregateDependencyData = {
     before: {
-      dependencies: normalizeDependencies(
-        packagesBefore.dependencies,
+      packageVersion: packageJsonBefore.version,
+      packageName: packageJsonBefore.name,
+      dependencies: enrichDependencies(
+        packageJsonBefore.dependencies,
         'dependency',
         'before'
       ),
-      devDependencies: normalizeDependencies(
-        packagesBefore.devDependencies,
+      devDependencies: enrichDependencies(
+        packageJsonBefore.devDependencies,
         'devDependency',
         'before'
       ),
     },
     after: {
-      dependencies: normalizeDependencies(
-        packagesAfter.dependencies,
+      packageVersion: packageJsonAfter.version,
+      packageName: packageJsonAfter.name,
+      dependencies: enrichDependencies(
+        packageJsonAfter.dependencies,
         'dependency',
         'after'
       ),
-      devDependencies: normalizeDependencies(
-        packagesAfter.devDependencies,
+      devDependencies: enrichDependencies(
+        packageJsonAfter.devDependencies,
         'devDependency',
         'after'
       ),
     },
   }
 
-  return normalizedDependencyData
+  return aggregateDependencyData
 }
 
 // generate report based on before and after
-const aggregate_dependency_report = (
-  before: NormalizedDependency[],
-  after: NormalizedDependency[]
+const compareDependencies = (
+  before: EnrichedDependency[],
+  after: EnrichedDependency[]
 ) => {
   const combined = before.map(beforeDependency => {
     const afterDependency = after.find(
@@ -118,6 +132,7 @@ const aggregate_dependency_report = (
     return !beforeDependency
   })
 
+  // const dependencyType = before.length
   const countBefore = before.length
   const countAfter = after.length
   const countChanged = changed.length
@@ -125,54 +140,54 @@ const aggregate_dependency_report = (
   const countAdded = added.length
 
   return {
-    stats: {
-      countBefore,
-      countAfter,
-      countChanged,
-      countRemoved,
-      countAdded,
-      summary: `${countBefore}->${countAfter} - ${countChanged} updated, ${countRemoved} removed ${countAdded} added`,
-    },
+    countBefore,
+    countAfter,
+    countChanged,
+    countRemoved,
+    countAdded,
   }
 }
 
 // return combined report with total stats based on data
-const report = (normalizedDependencyData: NormalizedDependencyData) => {
-  const devDependencies = aggregate_dependency_report(
-    normalizedDependencyData.before.devDependencies,
-    normalizedDependencyData.after.devDependencies
-  )
-  const dependencies = aggregate_dependency_report(
-    normalizedDependencyData.before.dependencies,
-    normalizedDependencyData.after.dependencies
-  )
-
-  const countBefore =
-    devDependencies.stats.countBefore + dependencies.stats.countAfter
-  const countAfter =
-    devDependencies.stats.countAfter + dependencies.stats.countAfter
-  const countChanged =
-    devDependencies.stats.countChanged + dependencies.stats.countChanged
-  const countRemoved =
-    devDependencies.stats.countRemoved + dependencies.stats.countRemoved
-  const countAdded =
-    devDependencies.stats.countAdded + dependencies.stats.countAdded
+const report = (aggregateDependencyData: AggregateDependencyData) => {
+  const { before, after } = aggregateDependencyData
+  const versionBefore = before.packageVersion
+  const versionAfter = after.packageVersion
+  const devDependencies = {
+    dependencyType: 'devDependencies',
+    versionBefore,
+    versionAfter,
+    ...compareDependencies(before.devDependencies, after.devDependencies),
+  }
+  const dependencies = {
+    dependencyType: 'dependencies',
+    versionBefore,
+    versionAfter,
+    ...compareDependencies(before.dependencies, after.dependencies),
+  }
+  const countBefore = devDependencies.countBefore + dependencies.countAfter
+  const countAfter = devDependencies.countAfter + dependencies.countAfter
+  const countChanged = devDependencies.countChanged + dependencies.countChanged
+  const countRemoved = devDependencies.countRemoved + dependencies.countRemoved
+  const countAdded = devDependencies.countAdded + dependencies.countAdded
 
   const total = {
-    stats: {
-      countBefore,
-      countAfter,
-      countChanged,
-      countRemoved,
-      countAdded,
-      summary: `${countBefore}->${countAfter} - ${countChanged} updated, ${countRemoved} removed, ${countAdded} added`,
-    },
+    dependencyType: 'total',
+    versionBefore,
+    versionAfter,
+    countBefore,
+    countAfter,
+    countChanged,
+    countRemoved,
+    countAdded,
   }
 
   return {
-    devDependencies,
-    dependencies,
-    total,
+    stats: {
+      devDependencies,
+      dependencies,
+      total,
+    },
   }
 }
 
@@ -180,18 +195,11 @@ export const comparePackageJsonFiles = (
   beforePath: string,
   afterPath: string
 ) => {
-  // read json files
-  const packageJsonAfter = fs.readFileSync(afterPath)
-  const packageJsonBefore = fs.readFileSync(beforePath)
-
-  // parse json
-  const packagesAfter = JSON.parse(packageJsonAfter.toString())
-  const packagesBefore = JSON.parse(packageJsonBefore.toString())
-
-  const normalizedDependencyData = getNormalizedDependencyData({
-    packagesBefore,
-    packagesAfter,
+  const packageJsonBefore = JSON.parse(fs.readFileSync(beforePath).toString())
+  const packageJsonAfter = JSON.parse(fs.readFileSync(afterPath).toString())
+  const aggregateDependencyData = getAggregateDependencyData({
+    packageJsonBefore,
+    packageJsonAfter,
   })
-
-  console.log(JSON.stringify(report(normalizedDependencyData), null, 4))
+  return JSON.stringify(report(aggregateDependencyData), null, 4)
 }

@@ -28,7 +28,64 @@ compares before and after versions of a package.json file to report stats
 
 Usage:
 ```
-npm-utils compare path/to/before-file.json path/to/after-file.json`
+npm-utils compare <before> <after> [--csv] [--output-file]
+
+compares before and after versions of a package.json file and reports stats
+
+Positionals:
+  before  path to package.json before changes                [string] [required]
+  after   path to package.json before changes                [string] [required]
+
+Options:
+      --help         Show help                                         [boolean]
+      --version      Show version number                               [boolean]
+  -c, --csv          output results in csv format                      [boolean]
+  -o, --output-file  provide a path to output file                     [boolean]
+```
+
+sample default output (json)
+```
+{
+    "stats": {
+        "devDependencies": {
+            "dependencyType": "devDependencies",
+            "versionBefore": "0.0.1",
+            "versionAfter": "0.0.1",
+            "countBefore": 140,
+            "countAfter": 123,
+            "countChanged": 49,
+            "countRemoved": 22,
+            "countAdded": 5
+        },
+        "dependencies": {
+            "dependencyType": "dependencies",
+            "versionBefore": "0.0.1",
+            "versionAfter": "0.0.1",
+            "countBefore": 77,
+            "countAfter": 74,
+            "countChanged": 20,
+            "countRemoved": 3,
+            "countAdded": 0
+        },
+        "total": {
+            "dependencyType": "total",
+            "versionBefore": "0.0.1",
+            "versionAfter": "0.0.1",
+            "countBefore": 214,
+            "countAfter": 197,
+            "countChanged": 69,
+            "countRemoved": 25,
+            "countAdded": 5
+        }
+    }
+}
+```
+sample csv output
+```
+"dependencyType","versionBefore","versionAfter","countBefore","countAfter","countChanged","countRemoved","countAdded"
+"devDependencies","0.0.1","0.0.1",140,123,49,22,5
+"dependencies","0.0.1","0.0.1",77,74,20,3,0
+"total","0.0.1","0.0.1",214,197,69,25,5
 ```
 
 ## Development
