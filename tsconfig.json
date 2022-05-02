@@ -5,7 +5,8 @@
     "moduleResolution": "node",
     "types": [
       "node"
-    ]
+    ],
+    "esModuleInterop": true
   },
   "files": [
     "index.ts",
